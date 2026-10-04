@@ -1,18 +1,8 @@
 // lil2-mdast-util-to-hast: an mdast arena to a hast arena.
 
-import { fromMarkdownTree } from "./mdast/index.lil";
-import { Tree } from "./mdast/tree.lil";
-import { Hast, keywordNames, propNames, tagNames } from "./hast.lil";
-import { ToHast, installCommonmark, installGfm, toHast } from "./to-hast.lil";
-
-// Converts `mdast` (root at node 0) with the CommonMark and GFM handlers, as upstream's defaults do.
-// Returns the state; its `hast` holds the tree, whose root is the returned `root`.
-export ToHast toHastTree(Tree mdast, bool allowDangerousHtml) {
-  ToHast state = new ToHast(mdast, allowDangerousHtml);
-  installCommonmark(state);
-  installGfm(state);
-  return state;
-}
+import { fromMarkdownTree } from "./mdast/parse.lil";
+import { Hast, keywordNames, propNames, tagNames } from "./hast/hast.lil";
+import { ToHast, toHast, toHastTree } from "./hast/to-hast.lil";
 
 // Markdown to hast, as positional columns (the arena's own arrays), indexed by node id. Enumerations are
 // ints: `kind` an `H_*`, `tag` an id into `tagNames`, a property's name an id into `propNames`, and a
