@@ -1,0 +1,25 @@
+{
+  "name": "@itslil/lil2-mdast-util-to-hast",
+  "version": "0.0.0",
+  "private": true,
+  "description": "mdast-util-to-hast, rewritten in typed LilScript: mdast arena to hast arena, same trees",
+  "type": "module",
+  "license": "MIT",
+  "author": "yeargun",
+  "repository": {"type": "git", "url": "git+https://github.com/yeargun/lil2-mdast-util-to-hast.git"},
+  "homepage": "https://yeargun.github.io/lil2-mdast-util-to-hast/",
+  "main": "./dist/to-hast.js",
+  "exports": {".": "./dist/to-hast.js"},
+  "scripts": {
+    "check:sources": "node scripts/shared-sources.mjs",
+    "build:dev": "node scripts/build.mjs --dev",
+    "build": "node scripts/build.mjs",
+    "test": "npm run check:sources && node --test test/differential.test.mjs"
+  },
+  "devDependencies": {
+    "character-entities": "2.0.2",
+    "commonmark.json": "^0.31.0",
+    "mdast-util-from-markdown": "2.0.3",
+    "mdast-util-to-hast": "13.2.1"
+  }
+}
