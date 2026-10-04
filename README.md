@@ -26,6 +26,29 @@ each property's JSX key per schema (generated from property-information), and la
 section) are installed by default, as upstream does. Builds: `dist/` and `dist/browser/` (named references decoded
 by the document).
 
+## Measured (2026-10-04)
+
+The `browser` build against mdast-util-to-hast@13.2.1 bundled for the browser with esbuild and minified by Terser, esbuild and Oxc
+(the smallest shown). Each objective is its own LilScript build (effort level 12, `lazy_functions`).
+
+| | lil2 | upstream, best minifier | difference |
+|---|---:|---:|---:|
+| raw | 58,540 | 73,664 (Terser) | −20.5% |
+| gzip (9) | 19,061 | 20,315 (Terser) | −6.2% |
+| Brotli (11) | 16,719 | 18,178 (Terser) | −8.0% |
+
+Speed, upstream → lil2: markdown to hast, median per call in a fresh browser context per lane, after checking that both
+give the same output (Playwright; Chromium 151, Firefox 153; AMD EPYC 7763 64-Core Processor). Cold rows are the first import and the
+first call of a fresh page.
+
+| | Chromium | Firefox |
+|---|---:|---:|
+| chat (1 KB) | 0.71 → 0.29 ms (0.41×) | 1.11 → 0.58 ms (0.53×) |
+| readme (26 KB) | 16.5 → 6.60 ms (0.40×) | 33.0 → 12.8 ms (0.39×) |
+| large (222 KB) | 168 → 69.6 ms (0.42×) | 375 → 125 ms (0.33×) |
+| import, cold | 5.00 → 5.10 ms | 10.0 → 11.0 ms |
+| first call, cold | 11.5 → 10.9 ms | 13.0 → 11.0 ms |
+
 ## Behaviour
 
 `test/differential.test.mjs` compares the hast with upstream's `toHast(fromMarkdown(md))` on 736 documents
