@@ -5,7 +5,7 @@ import {fromMarkdown} from 'mdast-util-from-markdown'
 import {toHast} from 'mdast-util-to-hast'
 import {corpus} from './corpus.mjs'
 import {fromColumns, fromObjects} from './rows.mjs'
-const {markdownToHast} = await import(new URL(process.env.LIL2_ARTIFACT ?? '../.dev/dist/to-hast.js', import.meta.url))
+const {markdownToHast, propNames, keywordNames} = await import(new URL(process.env.LIL2_ARTIFACT ?? '../.dev/dist/to-hast.js', import.meta.url))
 
 for (const allowDangerousHtml of [false, true]) {
   test(`hast equals upstream (allowDangerousHtml: ${allowDangerousHtml})`, () => {
@@ -13,7 +13,7 @@ for (const allowDangerousHtml of [false, true]) {
     for (const c of corpus()) {
       const expected = fromObjects(toHast(fromMarkdown(c.markdown), {allowDangerousHtml}))
       try {
-        assert.deepStrictEqual(fromColumns(markdownToHast(c.markdown, allowDangerousHtml)), expected)
+        assert.deepStrictEqual(fromColumns(markdownToHast(c.markdown, allowDangerousHtml), propNames, keywordNames), expected)
       } catch (error) {
         failures.push({name: c.name, markdown: c.markdown.slice(0, 160), error: String(error.message).slice(0, 900)})
       }

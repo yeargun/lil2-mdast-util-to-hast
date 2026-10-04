@@ -18,22 +18,26 @@ export function fromObjects(tree) {
   return rows
 }
 
-export function fromColumns(columns) {
-  const [root, kind, , firstChild, nextSibling, tagName, value, start, end, flags, meta, propHead, propName, propKind, propString, propNumber, propNext, lineStarts, kindNames] = columns
+// lil2's hast kinds, named for the comparison (test code only).
+const kindNames = ['root', 'element', 'text', 'raw', 'comment', 'doctype']
+
+// `columns` from `markdownToHast`; `propNames` and `keywordNames` are the module's vocabulary exports.
+export function fromColumns(columns, propNames, keywordNames) {
+  const [root, kind, , firstChild, nextSibling, tag, value, start, end, flags, meta, propHead, propName, propKind, propString, propNumber, propNext, lineStarts, tagNames] = columns
   const lineOf = offset => { let low = 0, high = lineStarts.length - 1; while (low < high) { const mid = (low + high + 1) >> 1; if (lineStarts[mid] <= offset) low = mid; else high = mid - 1 } return low + 1 }
   const point = offset => { const line = lineOf(offset); return [line, offset - lineStarts[line - 1] + 1, offset] }
-  const propValue = prop => [propString[prop], propNumber[prop], propNumber[prop] !== 0, propString[prop].split(' ')][propKind[prop]]
+  const propValue = prop => [propString[prop], propNumber[prop], propNumber[prop] !== 0, propString[prop].split(' '), keywordNames[propNumber[prop]]][propKind[prop]]
   const rows = []
   const walk = (id, parent) => {
     const type = kindNames[kind[id]]
     let properties = null
     if (type === 'element') {
       properties = []
-      for (let prop = propHead[id]; prop >= 0; prop = propNext[prop]) properties.push([propName[prop], propValue(prop)])
+      for (let prop = propHead[id]; prop >= 0; prop = propNext[prop]) properties.push([propNames[propName[prop]], propValue(prop)])
     }
     const position = flags[id] & 1 ? [...point(start[id]), ...point(end[id])] : null
     const row = rows.length
-    rows.push([type, parent, type === 'element' ? tagName[id] : null, type === 'text' || type === 'raw' ? value[id] : null, properties, flags[id] & 2 ? meta[id] : null, position, []])
+    rows.push([type, parent, type === 'element' ? tagNames[tag[id]] : null, type === 'text' || type === 'raw' ? value[id] : null, properties, flags[id] & 2 ? meta[id] : null, position, []])
     for (let child = firstChild[id]; child >= 0; child = nextSibling[child]) walk(child, row)
   }
   walk(root, -1)
