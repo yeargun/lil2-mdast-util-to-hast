@@ -1,7 +1,6 @@
 {
   "name": "@itslil/lil2-mdast-util-to-hast",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "mdast-util-to-hast, rewritten in typed LilScript: mdast arena to hast arena, same trees",
   "type": "module",
   "license": "MIT",
@@ -10,10 +9,31 @@
     "type": "git",
     "url": "git+https://github.com/yeargun/lil2-mdast-util-to-hast.git"
   },
+  "bugs": {
+    "url": "https://github.com/yeargun/lil2-mdast-util-to-hast/issues"
+  },
   "homepage": "https://yeargun.github.io/lil2-mdast-util-to-hast/",
+  "keywords": [
+    "mdast",
+    "hast",
+    "mdast-util",
+    "markdown",
+    "html",
+    "ast",
+    "lilscript",
+    "lil2",
+    "typed",
+    "fast"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
   "main": "./dist/to-hast.js",
+  "types": "./types/index.d.ts",
   "exports": {
     ".": {
+      "types": "./types/index.d.ts",
       "convex": "./dist/to-hast.js",
       "deno": "./dist/to-hast.js",
       "edge-light": "./dist/to-hast.js",
@@ -22,8 +42,24 @@
       "workerd": "./dist/to-hast.js",
       "browser": "./dist/browser/to-hast.js",
       "default": "./dist/to-hast.js"
+    },
+    "./constants": {
+      "types": "./types/constants.d.ts",
+      "convex": "./dist/constants.js",
+      "deno": "./dist/constants.js",
+      "edge-light": "./dist/constants.js",
+      "react-native": "./dist/constants.js",
+      "worker": "./dist/constants.js",
+      "workerd": "./dist/constants.js",
+      "browser": "./dist/browser/constants.js",
+      "default": "./dist/constants.js"
     }
   },
+  "files": [
+    "dist/**/*.js",
+    "types",
+    "NOTICE.md"
+  ],
   "scripts": {
     "check:sources": "node scripts/shared-sources.mjs",
     "build:dev": "node scripts/build.mjs --dev",

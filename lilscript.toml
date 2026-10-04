@@ -31,7 +31,8 @@ pool_strings = true
 lazy_functions = true
 mode = "single"
 directory = "dist"
-entry_names = "to-hast.js"
+entry_names = "[name].js"
 
 [delivery.entries]
-index = "src/index.lil"
+to-hast = "src/index.lil"
+constants = "src/constants.lil"

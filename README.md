@@ -26,6 +26,77 @@ each property's JSX key per schema (generated from property-information), and la
 section) are installed by default, as upstream does. Builds: `dist/` and `dist/browser/` (named references decoded
 by the document).
 
+## Install
+
+```bash
+npm install @itslil/lil2-mdast-util-to-hast
+```
+
+TypeScript types are included. One ES module per entry; Node, Deno, Bun and workers get `dist/`, bundlers targeting
+browsers get `dist/browser/` through the `browser` condition.
+
+## Use
+
+```ts
+import {markdownToHast, propNames, type HastColumns} from '@itslil/lil2-mdast-util-to-hast'
+import {H_ELEMENT, P_STRING, TAG_A} from '@itslil/lil2-mdast-util-to-hast/constants'
+
+const tree: HastColumns = markdownToHast('Read [the guide](https://example.com/guide "Guide").')
+const [root, kind, , firstChild, nextSibling, tag, , , , , , propHead, propName, propKind, propString, , propNext, , tagNames] = tree
+
+function* walk(node = root): Generator<number> {
+  yield node
+  for (let child = firstChild[node]; child >= 0; child = nextSibling[child]) yield* walk(child)
+}
+function attributes(node: number): Record<string, string> {
+  const out: Record<string, string> = {}
+  for (let p = propHead[node]; p >= 0; p = propNext[p]) if (propKind[p] === P_STRING) out[propNames[propName[p]]] = propString[p]
+  return out
+}
+
+for (const node of walk()) {
+  if (kind[node] === H_ELEMENT) console.log(tagNames[tag[node]]) // p, a
+  if (kind[node] === H_ELEMENT && tag[node] === TAG_A) console.log(attributes(node)) // { href: '…', title: 'Guide' }
+}
+```
+
+`markdownToHast(value, allowDangerousHtml?)` runs mdast-util-from-markdown and mdast-util-to-hast with remark-rehype's
+defaults; `allowDangerousHtml` keeps raw HTML as `raw` nodes.
+
+The tree is positional columns, indexed by node id (types: `HastColumns`; `propNames` and `keywordNames` come with
+the main entry). Ids are arena slots: walk from `root`, since a node a transform replaced (rehype-katex replaces math
+elements) keeps its slot but is no longer linked.
+
+| # | column | per node |
+|---|---|---|
+| 0 | `root` | the root's id |
+| 1 | `kind` | an `H_*` constant: root, element, text, raw, comment, doctype |
+| 2–4 | `parent`, `firstChild`, `nextSibling` | node ids, -1 for none |
+| 5 | `tag` | an element's tag id: its name is `tagNames[tag]`, compare with `TAG_*` |
+| 6 | `value` | text, comment and raw content |
+| 7–8 | `startOffset`, `endOffset` | offsets into the source |
+| 9 | `flags` | `HN_*` bits |
+| 10 | `meta` | a code block's meta string |
+| 11 | `propHead` | an element's first property, -1 for none; properties continue along `propNext` |
+| 12–16 | `propName`, `propKind`, `propString`, `propNumber`, `propNext` | per property: name id (`propNames`), `P_*` kind, string value, number value (booleans 0/1, keyword ids into `keywordNames`), next |
+| 17 | `lineStarts` | the offset each line starts at |
+| 18 | `tagNames` | tag names by id |
+
+The constants (`H_*`, `HN_*`, `P_*`, `KW_*`, `TAG_*`, `PROP_*`, and the mdast `K_*`, `N_*`, `ALIGN_*`) come from
+`@itslil/lil2-mdast-util-to-hast/constants`, with literal types.
+
+### Which package
+
+| you want | package |
+|---|---|
+| React elements | [`@itslil/lil2-react-markdown`](https://github.com/yeargun/lil2-react-markdown) (`/gfm`, `/full` for GFM, math, KaTeX) |
+| an HTML string, CommonMark | [`@itslil/lil2-micromark`](https://github.com/yeargun/lil2-micromark) |
+| an HTML string with GFM, math or KaTeX | `renderToStaticMarkup` of lil2-react-markdown's `/full` flavor (below) |
+| mdast (syntax tree) | [`lil2-mdast-util-from-markdown`](https://github.com/yeargun/lil2-mdast-util-from-markdown); with GFM [`lil2-remark-gfm`](https://github.com/yeargun/lil2-remark-gfm), math [`lil2-remark-math`](https://github.com/yeargun/lil2-remark-math), breaks [`lil2-remark-breaks`](https://github.com/yeargun/lil2-remark-breaks) |
+| hast (HTML tree) | [`lil2-mdast-util-to-hast`](https://github.com/yeargun/lil2-mdast-util-to-hast) and the same three, or [`lil2-rehype-katex`](https://github.com/yeargun/lil2-rehype-katex) with formulas rendered |
+
+Every package is one self-contained ES module with no runtime dependencies (React and KaTeX aside), ships its
+TypeScript types, and resolves to a Node build or a browser build through its `exports` conditions.
 ## Measured (2026-10-04)
 
 The `browser` build against mdast-util-to-hast@13.2.1 bundled for the browser with esbuild and minified by Terser, esbuild and Oxc
@@ -35,7 +106,7 @@ The `browser` build against mdast-util-to-hast@13.2.1 bundled for the browser wi
 |---|---:|---:|---:|
 | raw | 58,540 | 73,664 (Terser) | −20.5% |
 | gzip (9) | 19,061 | 20,315 (Terser) | −6.2% |
-| Brotli (11) | 16,719 | 18,178 (Terser) | −8.0% |
+| Brotli (11) | 16,688 | 18,178 (Terser) | −8.2% |
 
 Speed, upstream → lil2: markdown to hast, median per call in a fresh browser context per lane, after checking that both
 give the same output (Playwright; Chromium 151, Firefox 153; AMD EPYC 7763 64-Core Processor). Cold rows are the first import and the
@@ -43,11 +114,11 @@ first call of a fresh page.
 
 | | Chromium | Firefox |
 |---|---:|---:|
-| chat (1 KB) | 0.71 → 0.29 ms (0.41×) | 1.11 → 0.58 ms (0.53×) |
-| readme (26 KB) | 16.5 → 6.60 ms (0.40×) | 33.0 → 12.8 ms (0.39×) |
-| large (222 KB) | 168 → 69.6 ms (0.42×) | 375 → 125 ms (0.33×) |
-| import, cold | 5.00 → 5.10 ms | 10.0 → 11.0 ms |
-| first call, cold | 11.5 → 10.9 ms | 13.0 → 11.0 ms |
+| chat (1 KB) | 0.67 → 0.26 ms (0.40×) | 1.11 → 0.54 ms (0.48×) |
+| readme (26 KB) | 15.2 → 6.20 ms (0.41×) | 31.0 → 13.0 ms (0.42×) |
+| large (222 KB) | 156 → 62.5 ms (0.40×) | 375 → 123 ms (0.33×) |
+| import, cold | 4.90 → 5.10 ms | 10.0 → 11.0 ms |
+| first call, cold | 11.1 → 10.7 ms | 14.0 → 11.0 ms |
 
 ## Behaviour
 
